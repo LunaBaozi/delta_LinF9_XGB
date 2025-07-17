@@ -23,11 +23,10 @@ import calc_sasa
 import calc_vina_features
 import prepare_betaAtoms
 
-Vina = '/home/cyang/paper_XGB/delta_LinF9_XGB/software/smina_feature'
-Smina = '/home/cyang/paper_XGB/delta_LinF9_XGB/software/smina.static'
-SF = '/home/cyang/paper_XGB/delta_LinF9_XGB/software/sf_vina.txt'
-ADT = '/home/cyang/MGLTools-1.5.6/MGLToolsPckgs/AutoDockTools/Utilities24/prepare_receptor4.py'
-model_dir = '/home/cyang/paper_XGB/delta_LinF9_XGB/saved_model'
+Vina = '/vol/data/drug-design-pipeline/external/deltalinf9/software/smina_feature'
+Smina = '/vol/data/drug-design-pipeline/external/deltalinf9/software/smina.static'
+SF = '/vol/data/drug-design-pipeline/external/deltalinf9/software/sf_vina.txt'
+model_dir = '/vol/data/drug-design-pipeline/external/deltalinf9/saved_model'
 
 def run_XGB(pro, lig):
 
@@ -46,7 +45,7 @@ def run_XGB(pro, lig):
 
     ## 1. prepare_betaAtoms
     beta = os.path.join(os.path.dirname(pro), 'betaAtoms.pdb')
-    pro_pdbqt = prepare_betaAtoms.Prepare_beta(pro, beta, ADT)
+    pro_pdbqt = prepare_betaAtoms.Prepare_beta(pro, beta)
 
     ## 2. Vina_features
     v = calc_vina_features.vina(pro_pdbqt, lig, Vina, Smina)
@@ -84,7 +83,13 @@ def run_XGB(pro, lig):
     y_predict_ = []
     for i in range(1,11):
         xgb_model = pickle.load(open("%s/mod_%d.pickle.dat"%(model_dir,i),"rb"))
-        y_i_predict = xgb_model.predict(X, ntree_limit=xgb_model.best_ntree_limit)
+        # Updated for newer XGBoost API - ntree_limit parameter has been deprecated
+        try:
+            # Try the old API first for compatibility
+            y_i_predict = xgb_model.predict(X, ntree_limit=xgb_model.best_ntree_limit)
+        except TypeError:
+            # Use the new API if ntree_limit is not supported
+            y_i_predict = xgb_model.predict(X)
         y_predict_.append(y_i_predict)
 
     y_predict = np.average(y_predict_, axis=0)

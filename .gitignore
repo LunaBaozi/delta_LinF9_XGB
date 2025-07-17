@@ -1,0 +1,7 @@
+software/AlphaSpace2_2021
+software/MGLToolsPckgs
+software/msms
+*.pyc
+*.pdb
+*.pdbqt
+*.sdf
